@@ -1,0 +1,68 @@
+file_input: (_NEWLINE | stmt)*
+
+?stmt: simple_stmt | compound_stmt
+?simple_stmt: small_stmt ";"
+?small_stmt: import_stmt | expr_stmt | flow_stmt | func_call | cast_stmt
+?expr_stmt: assign
+
+assign: "let" NAME "=" value
+
+cast_stmt: value "->" NAME
+
+import_stmt: "import" "{" NAME "}" "from" NAME
+
+func_def: "fun" NAME "(" parameters? ")" typehint? "{" body "}"
+
+typehint: ":" NAME
+
+body: (_NEWLINE | stmt)*
+
+parameters: param_val ("," param_val)
+
+?param_val: typed_param ["=" NAME]
+?typed_param: NAME typehint
+
+compound_stmt: func_def | if_stmt | elseif_stmt | else_stmt
+if_stmt: "if" "(" test ")" "{" body "}"
+elseif_stmt: "elseif" "(" test ")" "{" body "}"
+else_stmt: "else" "{" body "}"
+?flow_stmt: return_stmt
+
+return_stmt: "return" [test]
+
+test: func_call
+    | compare
+
+compare: NAME compare_type NAME
+       | "!" NAME
+
+compare_type: ">=" -> ge
+            | "<=" -> le
+            | "==" -> eq
+            | ">" -> gt
+            | "<" -> lt
+
+func_call: NAME "(" arguments? ")"
+
+arguments: argvalue ("," argvalue)*
+?argvalue: value
+
+number: DEC_NUMBER | HEX_NUMBER | BIN_NUMBER | OCT_NUMBER | IMAG_NUMBER
+string: STRING | LONG_STRING
+
+?range: DEC_NUMBER ".." DEC_NUMBER
+
+value: range
+     | number
+     | string
+     | NAME
+
+COMMENT: /\/\/[^\n]*/
+_NEWLINE: ( /\r?\n[\t ]*/ | COMMENT )+
+
+%import python (NAME, STRING, LONG_STRING)
+%import python (DEC_NUMBER, HEX_NUMBER, OCT_NUMBER, BIN_NUMBER, FLOAT_NUMBER, IMAG_NUMBER)
+
+%ignore /[\t \f]+/  // WS
+%ignore /\\[\t \f]*\r?\n/   // LINE_CONT
+%ignore COMMENT
